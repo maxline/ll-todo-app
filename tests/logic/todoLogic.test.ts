@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { addTodo, deleteTodo, toggleTodo, generateId } from "@/app/lib/logic/todoLogic";
+import { addTodo, deleteTodo, toggleTodo, editTodo, generateId } from "@/app/lib/logic/todoLogic";
 import type { Todo } from "@/app/lib/types/todo";
 
 describe("todoLogic", () => {
@@ -148,6 +148,87 @@ describe("todoLogic", () => {
 
       expect(todos[0].completed).toBe(false);
       expect(newTodos[0].completed).toBe(true);
+    });
+  });
+
+  describe("editTodo", () => {
+    test("edits todo text by id", () => {
+      const todos: Todo[] = [
+        { id: "1", text: "Original text", completed: false, createdAt: Date.now() },
+        { id: "2", text: "Todo 2", completed: false, createdAt: Date.now() },
+      ];
+      const newTodos = editTodo(todos, "1", "Updated text");
+
+      expect(newTodos[0].text).toBe("Updated text");
+      expect(newTodos[1].text).toBe("Todo 2");
+    });
+
+    test("trims whitespace from new text", () => {
+      const todos: Todo[] = [
+        { id: "1", text: "Original text", completed: false, createdAt: Date.now() },
+      ];
+      const newTodos = editTodo(todos, "1", "  Updated text  ");
+
+      expect(newTodos[0].text).toBe("Updated text");
+    });
+
+    test("does not edit if new text is empty", () => {
+      const todos: Todo[] = [
+        { id: "1", text: "Original text", completed: false, createdAt: Date.now() },
+      ];
+      const newTodos = editTodo(todos, "1", "");
+
+      expect(newTodos[0].text).toBe("Original text");
+    });
+
+    test("does not edit if new text is only whitespace", () => {
+      const todos: Todo[] = [
+        { id: "1", text: "Original text", completed: false, createdAt: Date.now() },
+      ];
+      const newTodos = editTodo(todos, "1", "   ");
+
+      expect(newTodos[0].text).toBe("Original text");
+    });
+
+    test("only edits specified todo", () => {
+      const todos: Todo[] = [
+        { id: "1", text: "Todo 1", completed: false, createdAt: Date.now() },
+        { id: "2", text: "Todo 2", completed: false, createdAt: Date.now() },
+      ];
+      const newTodos = editTodo(todos, "1", "Updated Todo 1");
+
+      expect(newTodos[0].text).toBe("Updated Todo 1");
+      expect(newTodos[1].text).toBe("Todo 2");
+    });
+
+    test("returns same array if id not found", () => {
+      const todos: Todo[] = [
+        { id: "1", text: "Todo 1", completed: false, createdAt: Date.now() },
+      ];
+      const newTodos = editTodo(todos, "999", "Updated text");
+
+      expect(newTodos[0].text).toBe("Todo 1");
+    });
+
+    test("does not mutate original array", () => {
+      const todos: Todo[] = [
+        { id: "1", text: "Original text", completed: false, createdAt: Date.now() },
+      ];
+      const newTodos = editTodo(todos, "1", "Updated text");
+
+      expect(todos[0].text).toBe("Original text");
+      expect(newTodos[0].text).toBe("Updated text");
+    });
+
+    test("preserves other todo properties", () => {
+      const todos: Todo[] = [
+        { id: "1", text: "Original text", completed: true, createdAt: 123456 },
+      ];
+      const newTodos = editTodo(todos, "1", "Updated text");
+
+      expect(newTodos[0].id).toBe("1");
+      expect(newTodos[0].completed).toBe(true);
+      expect(newTodos[0].createdAt).toBe(123456);
     });
   });
 });

@@ -49,3 +49,20 @@ export function toggleTodo(todos: Todo[], id: string): Todo[] {
     todo.id === id ? { ...todo, completed: !todo.completed } : todo
   );
 }
+
+/**
+ * Edits the text of an existing todo
+ * @param todos - Current list of todos
+ * @param id - ID of the todo to edit
+ * @param newText - New text for the todo
+ * @returns New array with the edited todo
+ */
+export function editTodo(todos: Todo[], id: string, newText: string): Todo[] {
+  if (!newText.trim()) {
+    return todos;
+  }
+
+  return todos.map((todo) =>
+    todo.id === id ? { ...todo, text: newText.trim() } : todo
+  );
+}

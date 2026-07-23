@@ -1,0 +1,52 @@
+# GitHub Copilot Instructions — LL Todo App
+
+A minimal Todo application: Next.js 15 (App Router), React 19, Zustand, Tailwind CSS, running on Bun. Todos are in-memory only (no backend/persistence) — state resets on page reload.
+
+## Architecture
+
+```
+app/
+  layout.tsx              Server component root layout; wraps children in TodoStoreProvider
+  page.tsx                Server component; renders AddTodoForm + TodoList
+  components/             "use client" UI components
+  lib/
+    logic/todoLogic.ts    Pure functions: addTodo, deleteTodo, toggleTodo, generateId
+    store/
+      todoStore.ts        Zustand store factory (createTodoStore) + TodoStore type
+      StoreProvider.tsx   React context provider + useTodoStore selector hook
+    types/todo.ts          Todo and FilterType types
+tests/
+  logic/todoLogic.test.ts  Unit tests for pure logic (bun:test)
+  store/todoStore.test.ts  Unit tests for the Zustand store (bun:test)
+```
+
+**Data flow:** components call store actions (`useTodoStore((s) => s.addTodo)`) → store action calls a pure logic function with current state → logic function returns a new array → store sets it. Components never mutate `todos` directly and never inline list-transform logic.
+
+**Store instancing:** `createTodoStore()` is called once per app instance inside `TodoStoreProvider` (via `useState(() => createTodoStore())`), not as a module-level singleton. This is deliberate — it avoids cross-request state leakage under Next.js SSR. Don't "simplify" this into a single exported store instance.
+
+**Note:** `FilterType` (`app/lib/types/todo.ts`) is defined but not yet wired into any component or store action — there's no filter UI yet. Don't assume filtering exists when reasoning about behavior.
+
+## Coding Conventions
+
+- **Pure logic first.** Any new todo behavior (e.g. editing text, bulk actions, filtering) goes in `app/lib/logic/todoLogic.ts` as a pure function: `(todos: Todo[], ...args) => Todo[]`. Never mutate the input array — always return a new one.
+- **Store actions are thin wrappers.** A store action should call one logic function inside `set()`, not contain business logic itself.
+- **Imports use the `@/` alias** (maps to repo root, e.g. `@/app/lib/logic/todoLogic`), not relative `../../` paths.
+- **Client boundary:** only mark a component `"use client"` if it reads/writes the Zustand store or uses hooks/event handlers. `page.tsx` and `layout.tsx` stay server components.
+- **Styling is Tailwind utility classes only** — no CSS modules, styled-components, or inline `style={}` unless integrating a third-party widget that requires it. Reuse existing semantic tokens like `border-border`, `text-muted`, `bg-background`, `text-foreground` rather than raw color values.
+- **Selectors, not whole-store reads:** call `useTodoStore((state) => state.todos)` for the specific slice needed, not `useTodoStore((state) => state)`, to avoid unnecessary re-renders.
+- **Testing:** every new/changed function in `app/lib/logic/` needs matching cases in `tests/logic/todoLogic.test.ts` (happy path, edge case, and a non-mutation assertion). Store-level behavior changes need matching cases in `tests/store/todoStore.test.ts`. Run with `bun test`.
+
+## How to Review Pull Requests in This Repo
+
+When asked to review a PR or diff here, check these in order:
+
+1. **Logic lives in the right place.** Reject business logic embedded in a component or inline in a `set()` call inside `todoStore.ts` — it belongs in `todoLogic.ts` as a pure, exported function.
+2. **Immutability.** Every logic function must return a new array/object; flag any `.push`, `.splice`, direct property assignment, or sort-in-place on the input `todos`.
+3. **Test coverage.** A change to `app/lib/logic/*.ts` without a corresponding update in `tests/logic/*.test.ts` (or `app/lib/store/*.ts` without `tests/store/*.test.ts`) should be called out as missing. Confirm `bun test` passes.
+4. **Client/server boundary.** Flag `"use client"` added to a component that doesn't need it, and flag any server component (`page.tsx`, `layout.tsx`) that starts reading the Zustand store directly instead of delegating to a client child.
+5. **Store consumption.** Flag components subscribing to the entire store state instead of a narrow selector, and any prop-drilling of store data where `useTodoStore` should be called directly in the consuming component instead.
+6. **Styling.** Flag non-Tailwind styling additions (CSS files, inline styles, new UI libraries) unless justified. Check basic accessibility on interactive elements (checkbox/button labeling, focus states — see existing `focus:ring-black` pattern).
+7. **Type safety.** New todo fields or actions should update `app/lib/types/todo.ts` and the `TodoStore` interface in `todoStore.ts` together, not one without the other.
+8. **Scope.** This is a small, dependency-light app — push back on unrequested new dependencies, premature abstractions (e.g. generic CRUD framework for a 3-action store), or unrelated refactors bundled into a feature PR.
+
+Summarize review findings as a short list grouped by severity (must-fix vs. nit), referencing exact file paths and line numbers.
