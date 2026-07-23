@@ -34,3 +34,20 @@ Data flow for any new feature: pure function in `app/lib/logic` → thin action 
 Imports use the `@/` alias (maps to repo root per `tsconfig.json`), not relative `../../` paths — e.g. `@/app/lib/logic/todoLogic`.
 
 Styling is Tailwind CSS utility classes only (no CSS modules/styled-components), using the custom palette in `tailwind.config.ts` (`background`, `foreground`, `border`, `muted`) — reuse these tokens rather than hardcoding colors.
+
+## Pull Requests & Code Review
+
+Opening a PR: keep it scoped to one feature/fix, make sure `bun run lint` and `bun test` both pass locally first (CI re-runs the same two on every PR into `main`), and add/update tests in `tests/logic/` or `tests/store/` alongside any change to `app/lib/`. The `claude-code-review.yml` workflow auto-runs a review on every PR open/update, and `claude.yml` responds to `@claude` mentions in PR/issue comments — expect automated review comments in addition to human ones.
+
+When reviewing a PR or diff in this repo, check in this order:
+
+1. **Logic lives in the right place.** Reject business logic embedded in a component or inlined into a `set()` call inside `todoStore.ts` — it belongs in `app/lib/logic/*.ts` as a pure, exported function.
+2. **Immutability.** Every logic function must return a new array/object; flag any `.push`, `.splice`, direct property assignment, or in-place sort on the input `todos`.
+3. **Test coverage.** A change to `app/lib/logic/*.ts` without a corresponding update in `tests/logic/*.test.ts` (or `app/lib/store/todoStore.ts` without `tests/store/todoStore.test.ts`) should be called out as missing. Confirm `bun test` passes.
+4. **Client/server boundary.** Flag `"use client"` added to a component that doesn't need it, and flag any server component (`page.tsx`, `layout.tsx`) that starts reading the Zustand store directly instead of delegating to a client child.
+5. **Store consumption.** Flag components subscribing to the whole store instead of a narrow selector, and any prop-drilling of store data where `useTodoStore` should be called directly in the consuming component instead.
+6. **Styling.** Flag non-Tailwind styling additions (CSS files, inline styles, new UI libraries) unless justified. Check basic accessibility on interactive elements (labeling, focus states — see the existing `focus:ring-black` pattern).
+7. **Type safety.** New todo fields or actions should update `app/lib/types/todo.ts` and the `TodoStore` interface in `todoStore.ts` together, not one without the other.
+8. **Scope.** This is a small, dependency-light app — push back on unrequested new dependencies, premature abstractions (e.g. a generic CRUD framework for a handful of store actions), or unrelated refactors bundled into a feature PR.
+
+Summarize review findings as a short list grouped by severity (must-fix vs. nit), referencing exact file paths and line numbers.
