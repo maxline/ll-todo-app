@@ -1,5 +1,6 @@
 import { AddTodoForm } from "./components/AddTodoForm";
 import { TodoList } from "./components/TodoList";
+import { FilterBar } from "./components/FilterBar";
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
         </h1>
         <AddTodoForm />
         <TodoList />
+        <FilterBar />
       </div>
     </main>
   );
