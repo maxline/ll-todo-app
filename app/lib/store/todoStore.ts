@@ -6,11 +6,13 @@ import { clearCompleted as clearCompletedLogic } from "@/app/lib/logic/filterLog
 export interface TodoStore {
   todos: Todo[];
   filter: FilterType;
+  search: string;
   addTodo: (text: string) => void;
   deleteTodo: (id: string) => void;
   toggleTodo: (id: string) => void;
   editTodo: (id: string, newText: string) => void;
   setFilter: (filter: FilterType) => void;
+  setSearch: (search: string) => void;
   clearCompleted: () => void;
 }
 
@@ -18,6 +20,7 @@ export const createTodoStore = () => {
   return create<TodoStore>((set) => ({
     todos: [],
     filter: "all",
+    search: "",
     addTodo: (text: string) =>
       set((state) => ({ todos: addTodo(state.todos, text) })),
     deleteTodo: (id: string) =>
@@ -28,6 +31,8 @@ export const createTodoStore = () => {
       set((state) => ({ todos: editTodo(state.todos, id, newText) })),
     setFilter: (filter: FilterType) =>
       set({ filter }),
+    setSearch: (search: string) =>
+      set({ search }),
     clearCompleted: () =>
       set((state) => ({ todos: clearCompletedLogic(state.todos) })),
   }));

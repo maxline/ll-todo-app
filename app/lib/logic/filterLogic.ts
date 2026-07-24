@@ -44,3 +44,19 @@ export function getCompletedCount(todos: Todo[]): number {
 export function clearCompleted(todos: Todo[]): Todo[] {
   return todos.filter((todo) => !todo.completed);
 }
+
+/**
+ * Filters todos by a case-insensitive text search against the todo text
+ * @param todos - List of todos to search
+ * @param query - Search query
+ * @returns New array of todos whose text includes the query
+ */
+export function searchTodos(todos: Todo[], query: string): Todo[] {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) {
+    return todos;
+  }
+  return todos.filter((todo) =>
+    todo.text.toLowerCase().includes(normalizedQuery)
+  );
+}

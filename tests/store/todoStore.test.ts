@@ -9,6 +9,20 @@ describe("todoStore", () => {
     expect(state.todos).toEqual([]);
   });
 
+  test("initializes with an empty search string", () => {
+    const store = createTodoStore();
+    const state = store.getState();
+
+    expect(state.search).toBe("");
+  });
+
+  test("setSearch updates the search state", () => {
+    const store = createTodoStore();
+    store.getState().setSearch("milk");
+
+    expect(store.getState().search).toBe("milk");
+  });
+
   test("addTodo adds a new todo to the store", () => {
     const store = createTodoStore();
     store.getState().addTodo("Buy milk");

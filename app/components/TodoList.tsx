@@ -2,13 +2,14 @@
 
 import { useTodoStore } from "@/app/lib/store/StoreProvider";
 import { TodoItem } from "./TodoItem";
-import { filterTodos } from "@/app/lib/logic/filterLogic";
+import { filterTodos, searchTodos } from "@/app/lib/logic/filterLogic";
 
 export function TodoList() {
   const todos = useTodoStore((state) => state.todos);
   const filter = useTodoStore((state) => state.filter);
+  const search = useTodoStore((state) => state.search);
 
-  const filteredTodos = filterTodos(todos, filter);
+  const filteredTodos = searchTodos(filterTodos(todos, filter), search);
 
   if (todos.length === 0) {
     return (
@@ -21,7 +22,7 @@ export function TodoList() {
   if (filteredTodos.length === 0) {
     return (
       <div className="text-center py-12 text-muted">
-        No {filter} todos.
+        {search.trim() ? `No todos match "${search.trim()}".` : `No ${filter} todos.`}
       </div>
     );
   }
