@@ -20,10 +20,19 @@ export function TodoList() {
   }
 
   if (filteredTodos.length === 0) {
+    const trimmedSearch = search.trim();
+    let emptyMessage: string;
+    if (trimmedSearch && filter !== "all") {
+      emptyMessage = `No ${filter} todos match "${trimmedSearch}".`;
+    } else if (trimmedSearch) {
+      emptyMessage = `No todos match "${trimmedSearch}".`;
+    } else if (filter === "all") {
+      emptyMessage = "No todos.";
+    } else {
+      emptyMessage = `No ${filter} todos.`;
+    }
     return (
-      <div className="text-center py-12 text-muted">
-        {search.trim() ? `No todos match "${search.trim()}".` : `No ${filter} todos.`}
-      </div>
+      <div className="text-center py-12 text-muted">{emptyMessage}</div>
     );
   }
 
