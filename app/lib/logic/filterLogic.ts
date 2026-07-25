@@ -46,10 +46,10 @@ export function clearCompleted(todos: Todo[]): Todo[] {
 }
 
 /**
- * Filters todos by a case-insensitive text search against the todo text
+ * Filters todos by a case-insensitive substring search against todo.text (no-op for empty/whitespace query).
  * @param todos - List of todos to search
  * @param query - Search query
- * @returns New array of todos whose text includes the query
+ * @returns Filtered todos (or the original array when query is empty)
  */
 export function searchTodos(todos: Todo[], query: string): Todo[] {
   const normalizedQuery = query.trim().toLowerCase();
