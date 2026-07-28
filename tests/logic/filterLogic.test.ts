@@ -4,6 +4,7 @@ import {
   getActiveCount,
   getCompletedCount,
   clearCompleted,
+  searchTodos,
 } from "@/app/lib/logic/filterLogic";
 import type { Todo } from "@/app/lib/types/todo";
 
@@ -145,6 +146,47 @@ describe("filterLogic", () => {
     test("returns empty array for empty input", () => {
       const result = clearCompleted([]);
       expect(result).toHaveLength(0);
+    });
+  });
+
+  describe("searchTodos", () => {
+    test("returns all todos when query is empty", () => {
+      const result = searchTodos(mockTodos, "");
+      expect(result).toEqual(mockTodos);
+    });
+
+    test("returns all todos when query is only whitespace", () => {
+      const result = searchTodos(mockTodos, "   ");
+      expect(result).toEqual(mockTodos);
+    });
+
+    test("filters todos by case-insensitive substring match", () => {
+      const result = searchTodos(mockTodos, "ACTIVE");
+      expect(result).toHaveLength(3);
+      expect(result.every((todo) => todo.text.includes("Active"))).toBe(true);
+    });
+
+    test("matches partial words", () => {
+      const result = searchTodos(mockTodos, "todo 1");
+      expect(result).toHaveLength(2);
+      expect(result.map((todo) => todo.id)).toEqual(["1", "2"]);
+    });
+
+    test("returns empty array when nothing matches", () => {
+      const result = searchTodos(mockTodos, "nonexistent");
+      expect(result).toHaveLength(0);
+    });
+
+    test("trims surrounding whitespace from the query", () => {
+      const result = searchTodos(mockTodos, "  active todo 2  ");
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("3");
+    });
+
+    test("does not mutate original array", () => {
+      const original = [...mockTodos];
+      searchTodos(mockTodos, "active");
+      expect(mockTodos).toEqual(original);
     });
   });
 });
